@@ -15,17 +15,18 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 #global varaible
-R1LBS = 50;
-R2LBS = 50;
-R1MS = 0;
-R2MS =0;
+R1LBS = 10
+R1LBS_SENT=0
+R2LBS = 50
+R1MS = 0
+R2MS =0
 
-RPWM = 19;  # GPIO pin 19 to the RPWM on the BTS7960
-LPWM = 26;  # GPIO pin 26 to the LPWM on the BTS7960
+RPWM = 19  # GPIO pin 19 to the RPWM on the BTS7960
+LPWM = 26  # GPIO pin 26 to the LPWM on the BTS7960
 
 # For enabling "Left" and "Right" movement
-L_EN = 20;  # GPIO pin 20 to L_EN on the BTS7960
-R_EN = 21;  # GPIO pin 21 to R_EN on the BTS7960
+L_EN = 20  # GPIO pin 20 to L_EN on the BTS7960
+R_EN = 21  # GPIO pin 21 to R_EN on the BTS7960
 
 # Set all of our PINS to output
 GPIO.setup(RPWM, GPIO.OUT)
@@ -83,6 +84,11 @@ def on_message(client, userdata, msg):
     strij= stri.replace("b","")
     strifinal = strij.replace("'","")
     print(strifinal)
+    global R1LBS_SENT
+    if R1LBS != R1LBS_SENT:
+        client.publish("Rack1L",R1LBS)
+        R1LBS_SENT = R1LBS
+        print(R1LBS)
     if msg.topic == 'Rack/Rack1/Moist':
         R1M = strifinal
         root.setvar(name= "rack1_moist" , value=R1M)
@@ -93,6 +99,8 @@ def on_message(client, userdata, msg):
         root.setvar(name="rack1_light", value=R1L)
         db.child("Rack_No").child("Rack No 1").child("Light").set(strifinal)
         print("Light1 sent to database")
+    
+            
     if msg.topic == 'Rack/Rack2/Moist':
         R2M = strifinal
         root.setvar(name= "rack2_moist" , value=R2M)
@@ -103,7 +111,10 @@ def on_message(client, userdata, msg):
         root.setvar(name="rack2_light", value=R2L)
         db.child("Rack_No").child("Rack No 2").child("Light").set(strifinal)
         print("Light2 sent to database")
+        client.publish("Rack2L", R2LBS)
     if msg.topic == 'Rack/RackTemp/PH':
+        PH = strifinal
+        root.setvar(name="phdisp", value= PH)
         db.child("Rack_No").child("Rack No 1").child("WaterParameter").set("PH:" + strifinal)
         db.child("Rack_No").child("Rack No 2").child("WaterParameter").set("PH:"+ strifinal)
         db.child("Rack_No").child("Rack No 3").child("WaterParameter").set("PH:"+ strifinal)
@@ -114,6 +125,8 @@ def on_message(client, userdata, msg):
         db.child("Rack_No").child("Rack No 8").child("WaterParameter").set("PH:"+ strifinal)
         print("PH sent to database")
     if msg.topic == 'Rack/RackTemp/WL':
+        Wl = strifinal
+        root.setvar(name="wldisp" , value=Wl)
         db.child("Rack_No").child("Rack No 1").child("WaterLevel").set(strifinal)
         db.child("Rack_No").child("Rack No 2").child("WaterLevel").set(strifinal)
         db.child("Rack_No").child("Rack No 3").child("WaterLevel").set(strifinal)
@@ -135,6 +148,18 @@ def on_message(client, userdata, msg):
         db.child("Rack_No").child("Rack No 7").child("Temperature").set(strifinal)
         db.child("Rack_No").child("Rack No 8").child("Temperature").set(strifinal)
         print("Temp sent to database")
+    if msg.topic == 'Rack/RackTemp/Humid':
+        humid = strifinal
+        root.setvar(name="humdisp", value=humid)
+        db.child("Rack_No").child("Rack No 1").child("Humidity").set(strifinal)
+        db.child("Rack_No").child("Rack No 2").child("Humidity").set(strifinal)
+        db.child("Rack_No").child("Rack No 3").child("Humidity").set(strifinal)
+        db.child("Rack_No").child("Rack No 4").child("Humidity").set(strifinal)
+        db.child("Rack_No").child("Rack No 5").child("Humidity").set(strifinal)
+        db.child("Rack_No").child("Rack No 6").child("Humidity").set(strifinal)
+        db.child("Rack_No").child("Rack No 7").child("Humidity").set(strifinal)
+        db.child("Rack_No").child("Rack No 8").child("Humidity").set(strifinal)
+        print("Humidity sent to database")
         
 def main():
     mqtt_client=mqtt.Client()
@@ -167,17 +192,20 @@ def close():
     exit(0)
 
 def rack1_light_slidercall(value):
+    global R1LBS
+    R1LBS = value
     temp = int(value)
     temp1= str(temp)
-    R1LBS = "%s%%"%temp1
-    root.setvar(name="R1LBS_Var", value=R1LBS)
+    R1LBSpr = "%s%%"%temp1
+    root.setvar(name="R1LBS_Var", value=R1LBSpr)
     print(value)
     
 def rack2_light_slidercall(value):
     temp = int(value)
     temp1= str(temp)
-    R2LBS = "%s%%"%temp1
-    root.setvar(name="R2LBS_Var", value=R2LBS)
+    R2LBS=temp1
+    R2LBSpr = "%s%%"%temp1
+    root.setvar(name="R2LBS_Var", value=R2LBSpr)
     print(value)
     
 def rack1_moist_slidercall(value):
@@ -223,10 +251,10 @@ label_Common = CTK.CTkLabel(root, text="Common", bg_color="blue")
 label_Common.place(x= 620, y= 400)
 
 label_Rack1 = CTK.CTkLabel(root, text= "RACK 1" , bg_color="blue")
-label_Rack1.place(x= 325, y = 150)
+label_Rack1.place(x= 325, y = 130)
 
 label_Rack2 = CTK.CTkLabel(root, text= "RACK 2" , bg_color="blue")
-label_Rack2.place(x= 925, y = 150)
+label_Rack2.place(x= 925, y = 130)
 
 #Temperature Widgets
 label_temp =CTK.CTkLabel(root, text="Temperature = ", bg_color="blue")
@@ -236,6 +264,35 @@ label_Deg.place(x= 580,y= 450)
 tempdisp = CTK.StringVar(master= root,value = "null" ,name= "tempdis")
 label_temp_val1 = CTK.CTkLabel(root,textvariable= tempdisp, fg_color="blue")
 label_temp_val1.place(x=550, y=450)
+
+#PH Widgets
+label_PH =CTK.CTkLabel(root, text="Water PH        = ", bg_color="blue")
+label_PH.place(x= 450 ,y= 480)
+label_ph_text=CTK.CTkLabel(root, text="Typically 7",bg_color="blue")
+label_ph_text.place(x=730 ,y= 480)
+phdisp = CTK.StringVar(master= root,value = "null" ,name= "phdisp")
+label_ph_val1 = CTK.CTkLabel(root,textvariable= phdisp, fg_color="blue")
+label_ph_val1.place(x=550, y=480)
+
+#Water level Widgets
+label_WL =CTK.CTkLabel(root, text="Water Level    = ", bg_color="blue")
+label_WL.place(x= 450 ,y= 510)
+label_wl_text=CTK.CTkLabel(root, text="between 0 to 25",bg_color="blue")
+label_wl_text.place(x=730 ,y= 510)
+wldisp = CTK.StringVar(master= root,value = "null" ,name= "wldisp")
+label_wl_val1 = CTK.CTkLabel(root,textvariable= wldisp, fg_color="blue")
+label_wl_val1.place(x=550, y=510)
+
+#Humidity Widgets
+label_humid =CTK.CTkLabel(root, text="Humidity = ", bg_color="blue")
+label_humid.place(x= 450 ,y= 540)
+label_RH = CTK.CTkLabel(root, text= "RH%", bg_color="blue")
+label_RH.place(x= 580,y= 540)
+label_RH_text=CTK.CTkLabel(root, text="Mumbai typically 55-75",bg_color="blue")
+label_RH_text.place(x=730 ,y= 540)
+humdisp = CTK.StringVar(master= root,value = "null" ,name= "humdisp")
+label_humid_val1 = CTK.CTkLabel(root,textvariable= humdisp, fg_color="blue")
+label_humid_val1.place(x=550, y=540)
 
 #Rack 1 Moisture Widgets
 label_rack1_moist_text =CTK.CTkLabel(root, text= " Soil Moisture = " ,bg_color="blue")
@@ -308,8 +365,3 @@ label_R2LBS_Var.place(x= 850,y= 280)
 root.protocol("WM_DELETE_WINDOW", close) #when window is closed exit the whole program
 
 root.mainloop()
-
-    
-    
-
-
