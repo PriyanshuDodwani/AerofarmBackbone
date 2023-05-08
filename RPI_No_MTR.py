@@ -8,16 +8,17 @@ import customtkinter as CTK
 import threading
 from sys import exit
 
-
-perc = "%"
 #setting GPIO for motor controller
 GPIO.setmode(GPIO.BCM)  
 GPIO.setwarnings(False)
 
 #global varaible
+
 R1LBS = 10
 R1LBS_SENT=0
-R2LBS = 50
+R2LBS = 10
+R2LBS_SENT=0
+
 R1MS = 0
 R2MS =0
 
@@ -52,7 +53,7 @@ lpwm.start(0)
 ip = ni.ifaddresses('wlan0')[ni.AF_INET][0]['addr']
 print(ip)
 
-# setting MQTT Parameters
+#Setting MQTT Parameters
 MQTT_ADDRESS = ip
 MQTT_USER = 'aerofarm'
 MQTT_PASS = '1234'
@@ -66,7 +67,9 @@ config = {
   "storageBucket" : "aerofarm-ly.appspot.com",
 }
 firebase = pyrebase.initialize_app(config)
-db = firebase.database() #creating firebase database
+
+#creating firebase database
+db = firebase.database() 
 
 CTK.set_appearance_mode("dark")
 CTK.set_default_color_theme("blue")
@@ -84,34 +87,45 @@ def on_message(client, userdata, msg):
     strij= stri.replace("b","")
     strifinal = strij.replace("'","")
     print(strifinal)
+    
     global R1LBS_SENT
+    global R2LBS_SENT
+    
+    #Publish if data is changed
     if R1LBS != R1LBS_SENT:
         client.publish("Rack1L",R1LBS)
         R1LBS_SENT = R1LBS
         print(R1LBS)
+    
+    #publish if data is chnged
+    if R2LBS != R2LBS_SENT:
+        client.publish("Rack2L", R2LBS)
+        R2LBS_SENT = R2LBS
+        print(R2LBS)
+        
     if msg.topic == 'Rack/Rack1/Moist':
         R1M = strifinal
         root.setvar(name= "rack1_moist" , value=R1M)
         db.child("Rack_No").child("Rack No 1").child("SoilMoisture").set(strifinal)
         print("Moist1 sent to database")
+        
     if msg.topic == 'Rack/Rack1/Light':
         R1L = strifinal
         root.setvar(name="rack1_light", value=R1L)
         db.child("Rack_No").child("Rack No 1").child("Light").set(strifinal)
         print("Light1 sent to database")
-    
             
     if msg.topic == 'Rack/Rack2/Moist':
         R2M = strifinal
         root.setvar(name= "rack2_moist" , value=R2M)
         db.child("Rack_No").child("Rack No 2").child("SoilMoisture").set(strifinal)
         print("Moist2 sent to database")
+        
     if msg.topic == 'Rack/Rack2/Light':
         R2L = strifinal
         root.setvar(name="rack2_light", value=R2L)
         db.child("Rack_No").child("Rack No 2").child("Light").set(strifinal)
         print("Light2 sent to database")
-        client.publish("Rack2L", R2LBS)
     if msg.topic == 'Rack/RackTemp/PH':
         PH = strifinal
         root.setvar(name="phdisp", value= PH)
@@ -185,7 +199,7 @@ if __name__=="__main__":
     print("Done threading")
     main()
     
-#program should end when exited the GUI
+#   program should end when exited the GUI
 def close():
     lpwm.ChangeDutyCycle(0)
     rpwm.ChangeDutyCycle(0)
@@ -201,9 +215,10 @@ def rack1_light_slidercall(value):
     print(value)
     
 def rack2_light_slidercall(value):
+    global R2LBS
+    R2LBS = value
     temp = int(value)
     temp1= str(temp)
-    R2LBS=temp1
     R2LBSpr = "%s%%"%temp1
     root.setvar(name="R2LBS_Var", value=R2LBSpr)
     print(value)
@@ -222,10 +237,8 @@ def rack2_moist_slidercall(value):
     root.setvar(name="R2MS_Var", value=R2MS)
     print(value)
 
-
-#  Local GUI
-
-root.geometry("1280x720")
+#   Local GUI
+root.geometry("1280x740")
 root.title("Aerofarm system")
 root.resizable(width = 1, height=1)
 
@@ -331,12 +344,12 @@ label_R2MS_Var.place(x= 850,y= 210)
 #Rack 1 Light Widgets
 label_rack1_light_text =CTK.CTkLabel(root, text= "Light intensity = " ,bg_color="blue")
 label_rack1_light_text.place(x = 150,y = 250)
-lr1lt =CTK.CTkLabel(root, text= " Set Value below from 0 to 100%" ,bg_color="blue")
+lr1lt =CTK.CTkLabel(root, text= " Set Value below from 0 to 255" ,bg_color="blue")
 lr1lt.place(x = 380 ,y = 250)
 rack1_light =CTK.StringVar(master= root, value="null", name = "rack1_light")
 label_rack1_light = CTK.CTkLabel(root,textvariable= rack1_light, fg_color="blue")
 label_rack1_light.place(x=250, y=250)
-slider_rack1_light= CTK.CTkSlider(root ,command= rack1_light_slidercall, from_=0 , to=100)
+slider_rack1_light= CTK.CTkSlider(root ,command= rack1_light_slidercall, from_=0 , to=255)
 slider_rack1_light.place(x= 375 , y= 280)
 
 R1LBS_Var = CTK.StringVar(master= root, value="null" + " %", name="R1LBS_Var")
@@ -348,12 +361,12 @@ label_R1LBS_Var.place(x= 250,y= 280)
 #Rack 2 Light Widgets
 label_rack2_light_text =CTK.CTkLabel(root, text= "Light intensity = " ,bg_color="blue")
 label_rack2_light_text.place(x = 750 ,y = 250)
-lr2lt =CTK.CTkLabel(root, text= " Set Value below from 0 to 100%" ,bg_color="blue")
+lr2lt =CTK.CTkLabel(root, text= " Set Value below from 0 to 255%" ,bg_color="blue")
 lr2lt.place(x = 980 ,y = 250)
 rack2_light =CTK.StringVar(master= root, value="null", name = "rack2_light")
 label_rack2_light = CTK.CTkLabel(root,textvariable= rack2_light, fg_color="blue")
 label_rack2_light.place(x=850, y=250)
-slider_rack2_light= CTK.CTkSlider(root ,command= rack2_light_slidercall, from_=0 , to=100)
+slider_rack2_light= CTK.CTkSlider(root ,command= rack2_light_slidercall, from_=0 , to=255)
 slider_rack2_light.place(x= 975, y= 280)
 
 R2LBS_Var = CTK.StringVar(master= root, value="null" + " %", name="R2LBS_Var")
