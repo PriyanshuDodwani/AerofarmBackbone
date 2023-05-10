@@ -16,10 +16,11 @@ CRGB leds[NUM_LEDS];
 BH1750 lightMeter;
 const int moist_sensor_pin = A0;
 
-const char* mqttServer = "192.168.0.171";
+const char* mqttServer = "10.0.131.126"; // Rpi IP
 const int mqttPort = 1883;
 const char* mqtt_username = "aerofarm"; 
 const char* mqtt_password = "1234"; 
+int required_light = 50;
 
 // Callback for Mqtt reciving messages
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -32,11 +33,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
   String message = "";
   for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
     message+=(char)payload[i];
   }
   Serial.println("-----------------------");
-  int required_light = message.toInt();
+  required_light = message.toInt();
   Serial.println(required_light);
     
 }
@@ -95,21 +95,22 @@ void connect_MQTT(){
 }
 
 void loop() {
-    for(int i = 0 ; i < NUM_LEDS; i++){
-    leds[i] = CRGB(255,255,255);
-    
-    }
+  for(int i = 0 ; i < NUM_LEDS; i++){
+    leds[i] = CRGB::Purple;
+    FastLED.setBrightness(required_light);
+    //Serial.println(required_light);
     FastLED.show();
+    }
     client.subscribe("Rack1L");
     float moisture_percentage;
     moisture_percentage = ( 100.00 - ( (analogRead(moist_sensor_pin)/1024.00) * 100.00 ) );
-    Serial.print("Soil Moisture(in Percentage) = ");
-    Serial.print(moisture_percentage);
-    Serial.println("%");
+    //Serial.print("Soil Moisture(in Percentage) = ");
+    //Serial.print(moisture_percentage);
+    //Serial.println("%");
     float lux = lightMeter.readLightLevel();
-    Serial.print("Light: ");
-    Serial.print(lux);
-    Serial.println(" lx");
+    //Serial.print("Light: ");
+    //Serial.print(lux);
+    //Serial.println(" lx");
     lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE);
 
     String M1 = String((float)moisture_percentage);
@@ -119,7 +120,6 @@ void loop() {
 
       Serial.println("Moisture sent");
       Serial.println(M1.c_str());
-      delay(2000);
     }
 
     else{
@@ -139,7 +139,6 @@ void loop() {
       delay(10);
       client.publish("Rack/Rack1/Light",L1.c_str());
   } 
-  delay(1000);
-    
-    client.loop();
+  client.loop();
+  delay(3000);
  }
