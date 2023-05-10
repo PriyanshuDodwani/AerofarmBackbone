@@ -55,15 +55,15 @@ void setup() {
   Wire.begin();
   //WiFiManager
   WiFiManager wifiManager;
-  wifiManager.autoConnect("Rack1");
+  wifiManager.autoConnect("Rack2");
   Serial.println("connected...yeey :)");
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
   while (!client.connected()) {
     Serial.println("Connecting to MQTT...");
 
-    if (client.connect("Rack1",mqtt_username, mqtt_password)) {
-      client.subscribe("Rack1L");
+    if (client.connect("Rack2",mqtt_username, mqtt_password)) {
+      client.subscribe("Rack2L");
       Serial.println("connected");
 
     } 
@@ -81,8 +81,8 @@ void setup() {
 void connect_MQTT(){
    while (!client.connected()) {
     
-      if (client.connect("Rack1",mqtt_username, mqtt_password)) {
-          client.subscribe("Rack1L");
+      if (client.connect("Rack2",mqtt_username, mqtt_password)) {
+          client.subscribe("Rack2L");
           Serial.println("connected");
         } 
         else {
@@ -101,7 +101,7 @@ void loop() {
     //Serial.println(required_light);
     FastLED.show();
     }
-    client.subscribe("Rack1L");
+    client.subscribe("Rack2L");
     float moisture_percentage;
     moisture_percentage = ( 100.00 - ( (analogRead(moist_sensor_pin)/1024.00) * 100.00 ) );
     //Serial.print("Soil Moisture(in Percentage) = ");
@@ -116,7 +116,7 @@ void loop() {
     String M1 = String((float)moisture_percentage);
     String L1 = String((float)lux);
 
-    if(client.publish("Rack/Rack1/Moist",M1.c_str())){
+    if(client.publish("Rack/Rack2/Moist",M1.c_str())){
 
       Serial.println("Moisture sent");
       Serial.println(M1.c_str());
@@ -126,9 +126,9 @@ void loop() {
       Serial.println("Moisture failed to send. Reconnecting to MQTT Broker and trying again");
       connect_MQTT();
       delay(10);
-      client.publish("Rack/Rack1/Moist",M1.c_str());
+      client.publish("Rack/Rack2/Moist",M1.c_str());
     }
-    if(client.publish("Rack/Rack1/Light",L1.c_str())){
+    if(client.publish("Rack/Rack2/Light",L1.c_str())){
 
       Serial.println("Light sent");
       Serial.println(L1.c_str());
@@ -137,7 +137,7 @@ void loop() {
       Serial.println("Light failed to send. Reconnecting to MQTT Broker and trying again");
       connect_MQTT();
       delay(10);
-      client.publish("Rack/Rack1/Light",L1.c_str());
+      client.publish("Rack/Rack2/Light",L1.c_str());
   } 
   client.loop();
   delay(3000);
