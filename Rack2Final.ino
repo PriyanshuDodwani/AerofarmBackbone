@@ -16,11 +16,13 @@ CRGB leds[NUM_LEDS];
 BH1750 lightMeter;
 const int moist_sensor_pin = A0;
 
-const char* mqttServer = "10.0.131.126"; // Rpi IP
+const char* mqttServer = "10.0.131.210"; // Rpi IP
 const int mqttPort = 1883;
 const char* mqtt_username = "aerofarm"; 
 const char* mqtt_password = "1234"; 
 int required_light = 50;
+
+float sent_lux = 0.0;
 
 // Callback for Mqtt reciving messages
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -71,7 +73,7 @@ void setup() {
 
       Serial.print("failed with state ");
       Serial.print(client.state());
-      delay(2000);
+      delay(1000);
 
     }
 }
@@ -89,7 +91,6 @@ void connect_MQTT(){
     
           Serial.print("failed with state ");
           Serial.print(client.state());
-          delay(2000);
         }
    }
 }
@@ -116,29 +117,26 @@ void loop() {
     String M1 = String((float)moisture_percentage);
     String L1 = String((float)lux);
 
-    if(client.publish("Rack/Rack2/Moist",M1.c_str())){
-
-      Serial.println("Moisture sent");
-      Serial.println(M1.c_str());
-    }
-
-    else{
-      Serial.println("Moisture failed to send. Reconnecting to MQTT Broker and trying again");
-      connect_MQTT();
-      delay(10);
-      client.publish("Rack/Rack2/Moist",M1.c_str());
-    }
-    if(client.publish("Rack/Rack2/Light",L1.c_str())){
-
-      Serial.println("Light sent");
-      Serial.println(L1.c_str());
-    }
-   else {
-      Serial.println("Light failed to send. Reconnecting to MQTT Broker and trying again");
-      connect_MQTT();
-      delay(10);
-      client.publish("Rack/Rack2/Light",L1.c_str());
-  } 
+        if(client.publish("Rack/Rack2/Moist",M1.c_str())){
+    
+          Serial.println("Moisture sent");
+        }
+    
+        else{
+          Serial.println("Moisture failed to send. Reconnecting to MQTT Broker and trying again");
+          connect_MQTT();
+          client.publish("Rack/Rack2/Moist",M1.c_str());
+        }
+        
+        if(client.publish("Rack/Rack2/Light",L1.c_str())){
+    
+          Serial.println("Light sent");
+          Serial.println(L1.c_str());        }
+       else {
+          Serial.println("Light failed to send. Reconnecting to MQTT Broker and trying again");
+          connect_MQTT();
+          client.publish("Rack/Rack2/Light",L1.c_str());
+      } 
   client.loop();
-  delay(3000);
+  delay(1000);
  }
