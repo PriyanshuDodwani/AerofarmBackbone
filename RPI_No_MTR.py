@@ -14,10 +14,10 @@ GPIO.setwarnings(False)
 
 #global varaible
 
-R1LBS = 10
-R1LBS_SENT=0
-R2LBS = 10
-R2LBS_SENT=0
+R1LBS = 500
+R1LBS_SENT=500
+R2LBS = 500
+R2LBS_SENT=500
 
 R1MS = 0
 R2MS =0
@@ -60,6 +60,7 @@ MQTT_PASS = '1234'
 MQTT_TOPIC = 'Rack/+/+'
 
 #Setting config for Firebase
+
 config = {
   "apiKey": "AIzaSyAzkf_ej7NEUhaBu4czuWE01gIHaSg2pig",
   "authDomain" : "aerofarm-ly.firebaseapp.com",
@@ -102,7 +103,7 @@ def on_message(client, userdata, msg):
         client.publish("Rack2L", R2LBS)
         R2LBS_SENT = R2LBS
         print(R2LBS)
-        
+    
     if msg.topic == 'Rack/Rack1/Moist':
         R1M = strifinal
         root.setvar(name= "rack1_moist" , value=R1M)
@@ -210,7 +211,7 @@ def rack1_light_slidercall(value):
     R1LBS = value
     temp = int(value)
     temp1= str(temp)
-    R1LBSpr = "%s%%"%temp1
+    R1LBSpr = temp1
     root.setvar(name="R1LBS_Var", value=R1LBSpr)
     print(value)
     
@@ -219,7 +220,7 @@ def rack2_light_slidercall(value):
     R2LBS = value
     temp = int(value)
     temp1= str(temp)
-    R2LBSpr = "%s%%"%temp1
+    R2LBSpr = temp1
     root.setvar(name="R2LBS_Var", value=R2LBSpr)
     print(value)
     
@@ -282,7 +283,7 @@ label_temp_val1.place(x=550, y=450)
 label_PH =CTK.CTkLabel(root, text="Water PH        = ", bg_color="blue")
 label_PH.place(x= 450 ,y= 480)
 label_ph_text=CTK.CTkLabel(root, text="Typically 7",bg_color="blue")
-label_ph_text.place(x=730 ,y= 480)
+label_ph_text.place(x=760 ,y= 480)
 phdisp = CTK.StringVar(master= root,value = "null" ,name= "phdisp")
 label_ph_val1 = CTK.CTkLabel(root,textvariable= phdisp, fg_color="blue")
 label_ph_val1.place(x=550, y=480)
@@ -290,8 +291,8 @@ label_ph_val1.place(x=550, y=480)
 #Water level Widgets
 label_WL =CTK.CTkLabel(root, text="Water Level    = ", bg_color="blue")
 label_WL.place(x= 450 ,y= 510)
-label_wl_text=CTK.CTkLabel(root, text="between 0 to 25",bg_color="blue")
-label_wl_text.place(x=730 ,y= 510)
+label_wl_text=CTK.CTkLabel(root, text="0(Above Motor) to 50(Full bucket)",bg_color="blue")
+label_wl_text.place(x=690 ,y= 510)
 wldisp = CTK.StringVar(master= root,value = "null" ,name= "wldisp")
 label_wl_val1 = CTK.CTkLabel(root,textvariable= wldisp, fg_color="blue")
 label_wl_val1.place(x=550, y=510)
@@ -310,16 +311,16 @@ label_humid_val1.place(x=550, y=540)
 #Rack 1 Moisture Widgets
 label_rack1_moist_text =CTK.CTkLabel(root, text= " Soil Moisture = " ,bg_color="blue")
 label_rack1_moist_text.place(x = 150 ,y = 180)
-lr1mt =CTK.CTkLabel(root, text= " Set Value below from 0 to 100%" ,bg_color="blue")
+lr1mt =CTK.CTkLabel(root, text= "Set Value below from 0 to 80%" ,bg_color="blue")
 lr1mt.place(x = 380 ,y = 180)
 rack1_moist =CTK.StringVar(master= root, value="null", name = "rack1_moist")
 label_rack1_moist = CTK.CTkLabel(root,textvariable= rack1_moist, fg_color="blue")
 label_rack1_moist.place(x=250, y=180)
-slider_rack1_moist= CTK.CTkSlider(root ,command= rack1_moist_slidercall, from_=0 , to=100)
+slider_rack1_moist= CTK.CTkSlider(root ,command= rack1_moist_slidercall, from_=0 , to=80)
 slider_rack1_moist.place(x= 375 , y= 210)
 
 R1MS_Var = CTK.StringVar(master= root, value="null" + " %", name="R1MS_Var")
-label_R1MS = CTK.CTkLabel(root, text=" Set Moisture = ", bg_color="blue")
+label_R1MS = CTK.CTkLabel(root, text="Set Moisture = ", bg_color="blue")
 label_R1MS.place(x= 150 ,y= 210)
 label_R1MS_Var = CTK.CTkLabel(root, textvariable= R1MS_Var, bg_color="blue")
 label_R1MS_Var.place(x= 250,y= 210)
@@ -327,16 +328,16 @@ label_R1MS_Var.place(x= 250,y= 210)
 #Rack 2 Moisture Widgets
 label_rack2_moist_text =CTK.CTkLabel(root, text= "Soil Moisture = " ,bg_color="blue")
 label_rack2_moist_text.place(x =750 ,y = 180 )
-lr2mt =CTK.CTkLabel(root, text= " Set Value below from 0 to 100%" ,bg_color="blue")
+lr2mt =CTK.CTkLabel(root, text= "Set Value below from 0 to 80%" ,bg_color="blue")
 lr2mt.place(x = 980 ,y = 180)
 rack2_moist =CTK.StringVar(master= root, value="null", name = "rack2_moist")
 label_rack2_moist = CTK.CTkLabel(root,textvariable= rack2_moist, fg_color="blue")
 label_rack2_moist.place(x=850, y=180)
-slider_rack2_moist= CTK.CTkSlider(root ,command= rack2_moist_slidercall, from_=0 , to=100)
+slider_rack2_moist= CTK.CTkSlider(root ,command= rack2_moist_slidercall, from_=0 , to=80)
 slider_rack2_moist.place(x= 975, y= 210)
 
 R2MS_Var = CTK.StringVar(master= root, value="null" + " %", name="R2MS_Var")
-label_R2MS = CTK.CTkLabel(root, text=" Set Moisture = ", bg_color="blue")
+label_R2MS = CTK.CTkLabel(root, text="Set Moisture = ", bg_color="blue")
 label_R2MS.place(x= 750 ,y= 210)
 label_R2MS_Var = CTK.CTkLabel(root, textvariable= R2MS_Var, bg_color="blue")
 label_R2MS_Var.place(x= 850,y= 210)
@@ -344,7 +345,7 @@ label_R2MS_Var.place(x= 850,y= 210)
 #Rack 1 Light Widgets
 label_rack1_light_text =CTK.CTkLabel(root, text= "Light intensity = " ,bg_color="blue")
 label_rack1_light_text.place(x = 150,y = 250)
-lr1lt =CTK.CTkLabel(root, text= " Set Value below from 0 to 255" ,bg_color="blue")
+lr1lt =CTK.CTkLabel(root, text= "Set Value below from 0 to 255%" ,bg_color="blue")
 lr1lt.place(x = 380 ,y = 250)
 rack1_light =CTK.StringVar(master= root, value="null", name = "rack1_light")
 label_rack1_light = CTK.CTkLabel(root,textvariable= rack1_light, fg_color="blue")
@@ -352,25 +353,29 @@ label_rack1_light.place(x=250, y=250)
 slider_rack1_light= CTK.CTkSlider(root ,command= rack1_light_slidercall, from_=0 , to=255)
 slider_rack1_light.place(x= 375 , y= 280)
 
-R1LBS_Var = CTK.StringVar(master= root, value="null" + " %", name="R1LBS_Var")
-label_R1LBS = CTK.CTkLabel(root, text=" Set Brightness = ", bg_color="blue")
+R1LBS_Var = CTK.StringVar(master= root, value="null", name="R1LBS_Var")
+label_R1LBS = CTK.CTkLabel(root, text="Set Intensity = ", bg_color="blue")
 label_R1LBS.place(x= 150 ,y= 280)
+label_LUX = CTK.CTkLabel(root, text=" LUX", bg_color="blue")
+label_LUX.place(x= 285,y= 250)
 label_R1LBS_Var = CTK.CTkLabel(root, textvariable= R1LBS_Var, bg_color="blue")
 label_R1LBS_Var.place(x= 250,y= 280)
 
 #Rack 2 Light Widgets
 label_rack2_light_text =CTK.CTkLabel(root, text= "Light intensity = " ,bg_color="blue")
 label_rack2_light_text.place(x = 750 ,y = 250)
-lr2lt =CTK.CTkLabel(root, text= " Set Value below from 0 to 255%" ,bg_color="blue")
+lr2lt =CTK.CTkLabel(root, text= "Set Value below from 0 to 255 %" ,bg_color="blue")
 lr2lt.place(x = 980 ,y = 250)
 rack2_light =CTK.StringVar(master= root, value="null", name = "rack2_light")
 label_rack2_light = CTK.CTkLabel(root,textvariable= rack2_light, fg_color="blue")
 label_rack2_light.place(x=850, y=250)
 slider_rack2_light= CTK.CTkSlider(root ,command= rack2_light_slidercall, from_=0 , to=255)
 slider_rack2_light.place(x= 975, y= 280)
+label_LUX2 = CTK.CTkLabel(root, text=" LUX", bg_color="blue")
+label_LUX2.place(x= 885,y= 250)
 
-R2LBS_Var = CTK.StringVar(master= root, value="null" + " %", name="R2LBS_Var")
-label_R2LBS = CTK.CTkLabel(root, text=" Set Brightness = ", bg_color="blue")
+R2LBS_Var = CTK.StringVar(master= root, value="null", name="R2LBS_Var")
+label_R2LBS = CTK.CTkLabel(root, text="Set Brightness = ", bg_color="blue")
 label_R2LBS.place(x= 750 ,y= 280)
 label_R2LBS_Var = CTK.CTkLabel(root, textvariable= R2LBS_Var, bg_color="blue")
 label_R2LBS_Var.place(x= 850,y= 280)
@@ -378,3 +383,8 @@ label_R2LBS_Var.place(x= 850,y= 280)
 root.protocol("WM_DELETE_WINDOW", close) #when window is closed exit the whole program
 
 root.mainloop()
+
+    
+    
+
+
