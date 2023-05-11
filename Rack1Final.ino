@@ -71,7 +71,7 @@ void setup() {
 
       Serial.print("failed with state ");
       Serial.print(client.state());
-      delay(2000);
+      delay(1000);
 
     }
 }
@@ -89,7 +89,7 @@ void connect_MQTT(){
     
           Serial.print("failed with state ");
           Serial.print(client.state());
-          delay(2000);
+          delay(1000)
         }
    }
 }
@@ -117,7 +117,6 @@ void loop() {
     String L1 = String((float)lux);
 
     if(client.publish("Rack/Rack1/Moist",M1.c_str())){
-
       Serial.println("Moisture sent");
       Serial.println(M1.c_str());
     }
@@ -125,7 +124,6 @@ void loop() {
     else{
       Serial.println("Moisture failed to send. Reconnecting to MQTT Broker and trying again");
       connect_MQTT();
-      delay(10);
       client.publish("Rack/Rack1/Moist",M1.c_str());
     }
     if(client.publish("Rack/Rack1/Light",L1.c_str())){
@@ -136,9 +134,8 @@ void loop() {
    else {
       Serial.println("Light failed to send. Reconnecting to MQTT Broker and trying again");
       connect_MQTT();
-      delay(10);
       client.publish("Rack/Rack1/Light",L1.c_str());
   } 
   client.loop();
-  delay(3000);
+  delay(1000);
  }
