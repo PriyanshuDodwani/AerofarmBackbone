@@ -22,6 +22,9 @@ R2LBS_SENT=500
 R1MS = 0
 R2MS =0
 
+R1M = 0
+R2M = 0
+
 RPWM = 19  # GPIO pin 19 to the RPWM on the BTS7960
 LPWM = 26  # GPIO pin 26 to the LPWM on the BTS7960
 
@@ -29,11 +32,18 @@ LPWM = 26  # GPIO pin 26 to the LPWM on the BTS7960
 L_EN = 20  # GPIO pin 20 to L_EN on the BTS7960
 R_EN = 21  # GPIO pin 21 to R_EN on the BTS7960
 
+# Water motor relay
+WRealy = 16 # GPIO pin 16 to Relay of Water motor
+
 # Set all of our PINS to output
 GPIO.setup(RPWM, GPIO.OUT)
 GPIO.setup(LPWM, GPIO.OUT)
 GPIO.setup(L_EN, GPIO.OUT)
 GPIO.setup(R_EN, GPIO.OUT)
+GPIO.setup(WRealy, GPIO.OUT)
+
+GPIO.output(WRealy, True)
+
 
 # Enable "Left" and "Right" movement on the HBRidge
 GPIO.output(R_EN, True)
@@ -71,12 +81,9 @@ firebase = pyrebase.initialize_app(config)
 
 #creating firebase database
 db = firebase.database() 
-
 CTK.set_appearance_mode("dark")
 CTK.set_default_color_theme("blue")
 root = CTK.CTk()
-
-
 
 def on_connect (client, userdata,flags,rc):
     print('connected with result code' +str(rc))
@@ -89,24 +96,12 @@ def on_message(client, userdata, msg):
     strifinal = strij.replace("'","")
     print(strifinal)
     
-    global R1LBS_SENT
-    global R2LBS_SENT
-    
-    #Publish if data is changed
-    if R1LBS != R1LBS_SENT:
-        client.publish("Rack1L",R1LBS)
-        R1LBS_SENT = R1LBS
-        print(R1LBS)
-    
-    #publish if data is chnged
-    if R2LBS != R2LBS_SENT:
-        client.publish("Rack2L", R2LBS)
-        R2LBS_SENT = R2LBS
-        print(R2LBS)
-    
     if msg.topic == 'Rack/Rack1/Moist':
-        R1M = strifinal
-        root.setvar(name= "rack1_moist" , value=R1M)
+        global R1M
+        Temp = strifinal
+        R1M = int(strifinal)
+        print(R1M)
+        root.setvar(name= "rack1_moist" , value=Temp)
         db.child("Rack_No").child("Rack No 1").child("SoilMoisture").set(strifinal)
         print("Moist1 sent to database")
         
@@ -117,8 +112,11 @@ def on_message(client, userdata, msg):
         print("Light1 sent to database")
             
     if msg.topic == 'Rack/Rack2/Moist':
-        R2M = strifinal
-        root.setvar(name= "rack2_moist" , value=R2M)
+        global R2M
+        Temp = strifinal
+        R2M = int(strifinal)
+        print(R2M)
+        root.setvar(name= "rack2_moist" , value=Temp)
         db.child("Rack_No").child("Rack No 2").child("SoilMoisture").set(strifinal)
         print("Moist2 sent to database")
         
@@ -176,34 +174,90 @@ def on_message(client, userdata, msg):
         db.child("Rack_No").child("Rack No 8").child("Humidity").set(strifinal)
         print("Humidity sent to database")
         
-def main():
-    mqtt_client=mqtt.Client()
-    mqtt_client.username_pw_set(MQTT_USER,MQTT_PASS)
-    mqtt_client.on_connect = on_connect
-    mqtt_client.on_message = on_message
-    mqtt_client.connect(MQTT_ADDRESS, 1883)
-    mqtt_client.loop_start()
+def on_publish(client , obj, mid):
+    print("published")
+    
+mqtt_client=mqtt.Client()
+mqtt_client.username_pw_set(MQTT_USER,MQTT_PASS)
+mqtt_client.on_connect = on_connect
+mqtt_client.on_message = on_message
+mqtt_client.on_publish = on_publish
+mqtt_client.connect(MQTT_ADDRESS, 1883)
+mqtt_client.loop_start()
 
+def sender():
+    global R1LBS_SENT
+    global R2LBS_SENT
+    #Publish if data is changed
+    if R1LBS != R1LBS_SENT:
+        mqtt_client.publish("Rack1L",R1LBS)
+        R1LBS_SENT = R1LBS
+        print("sent")
+    
+    #publish if data is chnged
+    if R2LBS != R2LBS_SENT:
+        mqtt_client.publish("Rack2L", R2LBS)
+        R2LBS_SENT = R2LBS
+        print("sent")
+    time.sleep(1)
+    sender()
+        
 def motor_control():
-    lpwm.ChangeDutyCycle(0)
-    rpwm.ChangeDutyCycle(0)
-    time.sleep(10)
-    rpwm.ChangeDutyCycle(0)
-    lpwm.ChangeDutyCycle(0)
-    time.sleep(10)
+    print("motor control started")
+    if (R1M < R1MS) :
+        print("R1M < R1MS")
+        lpwm.ChangeDutyCycle(0)
+        rpwm.ChangeDutyCycle(65)
+        time.sleep(5)
+        lpwm.ChangeDutyCycle(0)
+        rpwm.ChangeDutyCycle(0)
+        while R1M < R1MS +13 :
+            GPIO.output(WRealy, False)
+            time.sleep(1)
+            
+        GPIO.output(WRealy, True)
+        lpwm.ChangeDutyCycle(65)
+        rpwm.ChangeDutyCycle(0)
+        time.sleep(5)
+        lpwm.ChangeDutyCycle(0)
+        rpwm.ChangeDutyCycle(0)
+        
+    if R2M < R2MS :
+        lpwm.ChangeDutyCycle(0)
+        rpwm.ChangeDutyCycle(65)
+        time.sleep(6)
+        lpwm.ChangeDutyCycle(0)
+        rpwm.ChangeDutyCycle(0)
+        while R2M < R2MS +13 :
+            GPIO.output(WRealy, False)
+            time.sleep(1)
+        GPIO.output(WRealy, True)
+        lpwm.ChangeDutyCycle(65)
+        rpwm.ChangeDutyCycle(0)
+        time.sleep(6)
+        lpwm.ChangeDutyCycle(0)
+        rpwm.ChangeDutyCycle(0)
+        
+    else:
+        time.sleep(1)
+        
+    motor_control()
+    
     
 def start():
     Tmotor_ctrl.start()
 
 if __name__=="__main__":
     Tmotor_ctrl = threading.Thread(target= motor_control, daemon= True )
+    TSender= threading.Thread(target=sender, daemon=True)
+    TSender.start()
     print("Done threading")
-    main()
     
 #   program should end when exited the GUI
 def close():
     lpwm.ChangeDutyCycle(0)
     rpwm.ChangeDutyCycle(0)
+    GPIO.output(16, True)
     exit(0)
 
 def rack1_light_slidercall(value):
@@ -225,19 +279,21 @@ def rack2_light_slidercall(value):
     print(value)
     
 def rack1_moist_slidercall(value):
-    temp = int(value)
-    temp1=str(temp)
-    R1MS = "%s%%"%temp1
-    root.setvar(name="R1MS_Var", value=R1MS)
+    global R1MS
+    R1MS = int(value)
+    temp1=str(R1MS)
+    temp = "%s%%"%temp1
+    root.setvar(name="R1MS_Var", value=temp)
     print(value)
     
 def rack2_moist_slidercall(value):
-    temp = int(value)
-    temp1=str(temp)
-    R2MS = "%s%%"%temp1
-    root.setvar(name="R2MS_Var", value=R2MS)
+    global R2MS
+    R2MS = int(value)
+    temp1=str(R2MS)
+    temp = "%s%%"%temp1
+    root.setvar(name="R2MS_Var", value=temp)
     print(value)
-
+    
 #   Local GUI
 root.geometry("1280x740")
 root.title("Aerofarm system")
@@ -311,12 +367,12 @@ label_humid_val1.place(x=550, y=540)
 #Rack 1 Moisture Widgets
 label_rack1_moist_text =CTK.CTkLabel(root, text= " Soil Moisture = " ,bg_color="blue")
 label_rack1_moist_text.place(x = 150 ,y = 180)
-lr1mt =CTK.CTkLabel(root, text= "Set Value below from 0 to 80%" ,bg_color="blue")
+lr1mt =CTK.CTkLabel(root, text= "Set Value below from 0 to 85%" ,bg_color="blue")
 lr1mt.place(x = 380 ,y = 180)
 rack1_moist =CTK.StringVar(master= root, value="null", name = "rack1_moist")
 label_rack1_moist = CTK.CTkLabel(root,textvariable= rack1_moist, fg_color="blue")
 label_rack1_moist.place(x=250, y=180)
-slider_rack1_moist= CTK.CTkSlider(root ,command= rack1_moist_slidercall, from_=0 , to=80)
+slider_rack1_moist= CTK.CTkSlider(root ,command= rack1_moist_slidercall, from_=0 , to=85)
 slider_rack1_moist.place(x= 375 , y= 210)
 
 R1MS_Var = CTK.StringVar(master= root, value="null" + " %", name="R1MS_Var")
@@ -383,8 +439,3 @@ label_R2LBS_Var.place(x= 850,y= 280)
 root.protocol("WM_DELETE_WINDOW", close) #when window is closed exit the whole program
 
 root.mainloop()
-
-    
-    
-
-
