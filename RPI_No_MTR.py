@@ -42,7 +42,7 @@ GPIO.setup(L_EN, GPIO.OUT)
 GPIO.setup(R_EN, GPIO.OUT)
 GPIO.setup(WRealy, GPIO.OUT)
 
-GPIO.output(WRealy, True)
+GPIO.output(WRealy, False)
 
 
 # Enable "Left" and "Right" movement on the HBRidge
@@ -99,7 +99,7 @@ def on_message(client, userdata, msg):
     if msg.topic == 'Rack/Rack1/Moist':
         global R1M
         Temp = strifinal
-        R1M = int(strifinal)
+        R1M = int(float(strifinal))
         print(R1M)
         root.setvar(name= "rack1_moist" , value=Temp)
         db.child("Rack_No").child("Rack No 1").child("SoilMoisture").set(strifinal)
@@ -114,7 +114,7 @@ def on_message(client, userdata, msg):
     if msg.topic == 'Rack/Rack2/Moist':
         global R2M
         Temp = strifinal
-        R2M = int(strifinal)
+        R2M = int(float(strifinal))
         print(R2M)
         root.setvar(name= "rack2_moist" , value=Temp)
         db.child("Rack_No").child("Rack No 2").child("SoilMoisture").set(strifinal)
@@ -212,10 +212,10 @@ def motor_control():
         lpwm.ChangeDutyCycle(0)
         rpwm.ChangeDutyCycle(0)
         while R1M < R1MS +13 :
-            GPIO.output(WRealy, False)
+            GPIO.output(WRealy, True)
             time.sleep(1)
             
-        GPIO.output(WRealy, True)
+        GPIO.output(WRealy, False)
         lpwm.ChangeDutyCycle(65)
         rpwm.ChangeDutyCycle(0)
         time.sleep(5)
@@ -229,9 +229,9 @@ def motor_control():
         lpwm.ChangeDutyCycle(0)
         rpwm.ChangeDutyCycle(0)
         while R2M < R2MS +13 :
-            GPIO.output(WRealy, False)
+            GPIO.output(WRealy, True)
             time.sleep(1)
-        GPIO.output(WRealy, True)
+        GPIO.output(WRealy, False)
         lpwm.ChangeDutyCycle(65)
         rpwm.ChangeDutyCycle(0)
         time.sleep(6)
